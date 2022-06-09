@@ -3,7 +3,6 @@ const app = express()
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
-require('dotenv').config()
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cors())
@@ -44,7 +43,7 @@ const exerciseSchema = mongoose.Schema({
 
 const User = mongoose.model('User', userSchema)
 const Exercise = mongoose.model('Exercise', exerciseSchema)
-const handleError = (err, res) => res.json({error: err.message})
+const handleError = (err, res) => res.json({ error: err.message })
 
 app.post('/api/users/', (req, res) => {
   new User(req.body).save()
@@ -70,26 +69,26 @@ app.post('/api/users/:_id/exercises', (req, res) => {
 })
 
 app.get('/api/users/:_id/logs', (req, res) => {
-	console.log(req.query);
+  console.log(req.query);
   const { _id: id } = req.params
-	let from, to, limit = parseInt(req.query.limit);
-	if (req.query.from)
-		from = new Date(req.query.from)
-	else from = new Date(0)
-	if (req.query.to)
-		to = new Date(req.query.to)
-	else to = new Date()
-	if (isNaN(limit)) limit = 10000;
-	
+  let from, to, limit = parseInt(req.query.limit);
+  if (req.query.from)
+    from = new Date(req.query.from)
+  else from = new Date(0)
+  if (req.query.to)
+    to = new Date(req.query.to)
+  else to = new Date()
+  if (isNaN(limit)) limit = 10000;
+
   User.findById(id).select('username _id').exec()
     .then(user => {
       Exercise.find({ userId: id }).where('date').gte(from).lte(to)
         .limit(limit).select('description duration date -_id').exec()
         .then(exs => {
-                    const exd = exs.map(ex => ({ ...ex._doc, date: ex.date.toDateString() }))
-		console.log({ ...user._doc, count: exs.length, log: exd })
-			return res.json({ ...user._doc, count: exs.length, log: exd })
-		})
+          const exd = exs.map(ex => ({ ...ex._doc, date: ex.date.toDateString() }))
+          console.log({ ...user._doc, count: exs.length, log: exd })
+          return res.json({ ...user._doc, count: exs.length, log: exd })
+        })
         .catch(err => handleError(err, res))
     })
     .catch(err => handleError(err, res))
